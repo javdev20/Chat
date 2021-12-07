@@ -3,8 +3,7 @@ import examples.SimpleChatClient;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,6 +42,25 @@ public class Client {
         JButton sendButton = new JButton("Send");
 
         sendButton.addActionListener(new SendButtonListener());
+        outgoing.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                int key = e.getKeyCode();
+                if (key == KeyEvent.VK_ENTER) {
+                    sendMessage();
+                }
+            }
+        });
         setUpNetworking();
 
         JMenuBar menuBar = new JMenuBar();
@@ -70,6 +88,7 @@ public class Client {
         frame.setJMenuBar(menuBar);
         frame.getContentPane().add(BorderLayout.CENTER, panel);
         frame.setSize(650, 500);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 
@@ -89,17 +108,21 @@ public class Client {
 
     public class SendButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            try {
-                writer.println(outgoing.getText());
-                writer.flush();
-
-            }
-            catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            outgoing.setText("");
-            outgoing.requestFocus();
+            sendMessage();
         }
+    }
+
+    public void sendMessage() {
+        try {
+            writer.println(outgoing.getText());
+            writer.flush();
+
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        outgoing.setText("");
+        outgoing.requestFocus();
     }
 
     class IncomingReader implements Runnable {
