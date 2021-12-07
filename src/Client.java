@@ -45,6 +45,20 @@ public class Client {
         sendButton.addActionListener(new SendButtonListener());
         setUpNetworking();
 
+        JMenuBar menuBar = new JMenuBar();
+        JMenu main = new JMenu("Program");
+        JMenuItem exit = new JMenuItem("exit");
+
+        exit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        main.add(exit);
+        menuBar.add(main);
+
         Thread readerThread = new Thread(new IncomingReader());
         readerThread.start();
 
@@ -52,6 +66,8 @@ public class Client {
         panel.add(outgoing);
         panel.add(sendButton);
 
+
+        frame.setJMenuBar(menuBar);
         frame.getContentPane().add(BorderLayout.CENTER, panel);
         frame.setSize(650, 500);
         frame.setVisible(true);
