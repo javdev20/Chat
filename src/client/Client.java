@@ -1,5 +1,4 @@
-
-import examples.SimpleChatClient;
+package client;
 
 import javax.swing.*;
 import java.awt.*;
