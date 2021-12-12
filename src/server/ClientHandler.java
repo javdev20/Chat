@@ -1,55 +1,33 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Iterator;
 
-public class ClientHandler implements Runnable {
-    BufferedReader in;
+public class ClientHandler{
+    Server server;
     Socket socket;
-    static ArrayList clientOutputStreams;
+    private DataOutputStream out;
+    private DataInputStream in;
 
-    public ClientHandler(Socket clientSocket) {
+
+    public ClientHandler(Server server, Socket clientSocket) {
         try {
+            this.server = server;
             socket = clientSocket;
-            InputStreamReader isReader = new InputStreamReader(socket.getInputStream());
-            in = new BufferedReader(isReader);
-
-        } catch (Exception ex) { ex.printStackTrace(); }
-    }
-
-    public void run() {
-        String message;
-        try {
-            while ((message = in.readLine()) != null) {
-                // регистрация
-                if (message.startsWith("/signup ")) {
-                    String[] tokens = message.split(" ");
-                    int result = AuthService.addUser(tokens[1], tokens[2], tokens[3]);
-                    if (result > 0) {
-                        tellEveryone("Successful registration");
-                    } else {
-                        tellEveryone("Registration failed");
-                    }
-                } else {
-                    System.out.println("read " + message);
-                    tellEveryone(message);
-                }
-            }
-        } catch (Exception ex) { ex.printStackTrace(); }
-    }
-
-    public void tellEveryone(String message) {
-        Iterator it = clientOutputStreams.iterator();
-        while (it.hasNext()) {
-            try {
-                PrintWriter out = (PrintWriter) it.next();
-                out.println(message);
-                out.flush();
-            } catch (Exception ex) { ex.printStackTrace(); }
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+            server.connect(ClientHandler.this);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
+
+    public void sendMessage(String message) {
+        try {
+            out.writeUTF(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

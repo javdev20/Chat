@@ -1,7 +1,6 @@
 package server;
 
 
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -9,28 +8,42 @@ import java.util.ArrayList;
 
 public class Server {
 
-    public static void main(String[] args) {
-        new Server().go();
-    }
+    private ArrayList<ClientHandler> users;
+    ServerSocket serverSocket = null;
+    Socket socket = null;
+    private static int newClientIndex = 1;
+    private String clientName;
 
-    public void go() {
-        ClientHandler.clientOutputStreams = new ArrayList();
+    public Server() {
+        users = new ArrayList();
+
         try {
-            ServerSocket serverSocket = new ServerSocket(5000);
+            AuthService.connect();
+            serverSocket = new ServerSocket(7007);
+            System.out.println("Server started");
+
             while(true) {
-                Socket clientSocket = serverSocket.accept();
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream());
-                ClientHandler.clientOutputStreams.add(out);
-
-                Thread t = new Thread(new ClientHandler(clientSocket));
-                t.start();
-                System.out.println("got a connection");
-
-                // connection to database
-                AuthService.connect();
-
+                socket = serverSocket.accept();
+                System.out.printf("Client %s connected\n", socket.getInetAddress());
+                new ClientHandler(this, socket);
             }
         } catch (Exception ex) { ex.printStackTrace(); }
+    }
+
+    public void connect(ClientHandler client) {
+        users.add(client);
+        clientName = "Клиент #" + newClientIndex;
+        newClientIndex++;
+        broadcastMessage("SERVER", "Подключился новый клиент: " + clientName);
+        System.out.println(String.format("User [%s] connected", clientName));
+        broadcastMessage("SERVER", "Connected new client: " + clientName);
+    }
+
+    public void broadcastMessage(String clientName, String message) {
+        String out = String.format("[%s]: %s\n", clientName, message);
+        for (ClientHandler c : users) {
+            c.sendMessage(out);
+        }
     }
 
 }

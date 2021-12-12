@@ -3,18 +3,15 @@ package client;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 
 public class Client {
 
     JTextArea incoming;
     JTextField outgoing;
-    BufferedReader reader;
-    PrintWriter writer;
+    DataInputStream in;
+    DataOutputStream out;
     Socket socket;
 
     public static void main(String[] args) {
@@ -93,10 +90,9 @@ public class Client {
 
     private void setUpNetworking() {
         try {
-            socket = new Socket("127.0.0.1", 5000);
-            InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
-            reader = new BufferedReader(streamReader);
-            writer = new PrintWriter(socket.getOutputStream());
+            socket = new Socket("127.0.0.1", 7007);
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
             System.out.println("networking established");
         }
         catch(IOException ex)
@@ -113,9 +109,8 @@ public class Client {
 
     public void sendMessage() {
         try {
-            writer.println(outgoing.getText());
-            writer.flush();
-
+            out.writeUTF(outgoing.getText());
+            out.flush();
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -126,9 +121,9 @@ public class Client {
 
     class IncomingReader implements Runnable {
         public void run() {
-            String message;
             try {
-                while ((message = reader.readLine()) != null) {
+                while (true) {
+                    String message = in.readUTF();
                     System.out.println("client read " + message);
                     incoming.append(message + "\n");
                 }
