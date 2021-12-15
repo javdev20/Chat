@@ -127,8 +127,7 @@ public class Client {
                     System.out.println("client read " + message);
                     incoming.append(message + "\n");
                 }
-            } catch (IOException ex)
-            {
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }

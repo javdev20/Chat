@@ -1,41 +1,40 @@
 package server;
 
-
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-
+import java.util.List;
 
 public class Server {
-
-    private ArrayList<ClientHandler> users;
-    ServerSocket serverSocket = null;
-    Socket socket = null;
+    private List<ClientHandler> users;
     private static int newClientIndex = 1;
-    private String clientName;
 
     public Server() {
-        users = new ArrayList();
+        users = new ArrayList<>();
 
         try {
             AuthService.connect();
-            serverSocket = new ServerSocket(7007);
+            ServerSocket serverSocket = new ServerSocket(7007);
             System.out.println("Server started");
 
             while(true) {
-                socket = serverSocket.accept();
-                System.out.printf("Client %s connected\n", socket.getInetAddress());
+                Socket socket = serverSocket.accept();
                 new ClientHandler(this, socket);
             }
-        } catch (Exception ex) { ex.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void connect(ClientHandler client) {
+    public void connectClient(ClientHandler client) {
+        String clientName;
         users.add(client);
-        clientName = "Клиент #" + newClientIndex;
+        System.out.println(users.size());
+        clientName = "Client #" + newClientIndex;
         newClientIndex++;
-        broadcastMessage("SERVER", "Подключился новый клиент: " + clientName);
-        System.out.println(String.format("User [%s] connected", clientName));
+        System.out.println(String.format("[%s] connected", clientName));
+        client.setClientName(clientName);
         broadcastMessage("SERVER", "Connected new client: " + clientName);
     }
 
@@ -45,5 +44,14 @@ public class Server {
             c.sendMessage(out);
         }
     }
+
+//    public void disConnect(ClientHandler client) {
+//        users.remove(client);
+//        newClientIndex--;
+//        clientName = "Client #" + newClientIndex;
+//        System.out.println(String.format("[%s] disConnected", clientName));
+//        broadcastMessage("SERVER", "Disconnected client: " + clientName);
+//    }
+
 
 }
