@@ -9,6 +9,7 @@ import java.util.List;
 public class Server {
     private List<ClientHandler> users;
     private static int newClientIndex = 1;
+    private String clientName;
 
     public Server() {
         users = new ArrayList<>();
@@ -27,17 +28,6 @@ public class Server {
         }
     }
 
-    public void connectClient(ClientHandler client) {
-        String clientName;
-        users.add(client);
-        System.out.println(users.size());
-        clientName = "Client #" + newClientIndex;
-        newClientIndex++;
-        System.out.println(String.format("[%s] connected", clientName));
-        client.setClientName(clientName);
-        broadcastMessage("SERVER", "Connected new client: " + clientName);
-    }
-
     public void broadcastMessage(String clientName, String message) {
         String out = String.format("[%s]: %s\n", clientName, message);
         for (ClientHandler c : users) {
@@ -45,13 +35,28 @@ public class Server {
         }
     }
 
-//    public void disConnect(ClientHandler client) {
-//        users.remove(client);
-//        newClientIndex--;
-//        clientName = "Client #" + newClientIndex;
-//        System.out.println(String.format("[%s] disConnected", clientName));
-//        broadcastMessage("SERVER", "Disconnected client: " + clientName);
-//    }
 
+    public boolean isNickBusy(String nick) {
+        for (ClientHandler c : users) {
+            if (c.getNickname().equals(nick)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void subscribe(ClientHandler client) {
+        users.add(client);
+        System.out.println(String.format("User [%s] connected", client.getNickname()));
+        broadcastMessage("[SERVER]", "User " + client.getNickname()
+                                    + " connected");
+    }
+
+    public void unsubscribe(ClientHandler client) {
+        users.remove(client);
+        System.out.println(String.format("User [%s] disconnected", client.getNickname()));
+        broadcastMessage("[SERVER]", "User " + client.getNickname()
+                + "disconnected");
+    }
 
 }

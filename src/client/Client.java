@@ -95,8 +95,7 @@ public class Client {
             out = new DataOutputStream(socket.getOutputStream());
             System.out.println("networking established");
         }
-        catch(IOException ex)
-        {
+        catch(IOException ex) {
             ex.printStackTrace();
         }
     }
@@ -125,6 +124,9 @@ public class Client {
                 while (true) {
                     String message = in.readUTF();
                     System.out.println("client read " + message);
+                    if (message.equals("/close")) {
+                        System.exit(0);
+                    }
                     incoming.append(message + "\n");
                 }
             } catch (IOException ex) {

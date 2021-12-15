@@ -2,18 +2,14 @@ package server;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ClientHandler{
 
     Server server;
     DataOutputStream out;
     DataInputStream in;
-    String clientName;
     Socket socket;
-
-
+    String nickname;
 
     public ClientHandler(Server server, Socket clientSocket) {
         try {
@@ -23,11 +19,56 @@ public class ClientHandler{
             out = new DataOutputStream(socket.getOutputStream());
 
             new Thread(() -> {
+                boolean isExit = false;
                 try {
-                    server.connectClient(this);
                     while (true) {
                         String message = in.readUTF();
-                        server.broadcastMessage(clientName, message);
+                        if(message.startsWith("/signup")) {
+                            String[] tokens = message.split(" ");
+                            int result = AuthService.addUser(tokens[1], tokens[2], tokens[3]);
+                            if (result > 0) {
+                                sendMessage("Successful registration");
+                            } else {
+                                sendMessage( "Registration failed");
+                            }
+                        }
+
+                        if (message.startsWith("/auth")){
+                            String[] tokens = message.split(" ");
+                            String nick = AuthService.getNicknameByLoginAndPass(tokens[1], tokens[2]);
+                            if (nick != null) {
+                                if (!server.isNickBusy(nick)) {
+                                    sendMessage("/auth-OK");
+                                    setNickname(nick);
+                                    server.subscribe(ClientHandler.this);
+                                    break;
+                                } else {
+                                    sendMessage("Account is already in use!");
+                                }
+                            } else {
+                                sendMessage("Incorrect login/password");
+                            }
+                        }
+
+                        if ("/end".equals(message)) {
+                            isExit = true;
+                            break;
+                        }
+                    }
+
+                    if (!isExit) {
+                        while (true) {
+                            String message = in.readUTF();
+
+                            if ("/end".equalsIgnoreCase(message)){
+                                // для оповещения клиента, т.к. без сервера клиент работать не должен
+                                out.writeUTF("/serverClosed");
+                                System.out.println("Client (" + socket.getInetAddress() + ") exited");
+                                break;
+                            } else {
+                                server.broadcastMessage(nickname, message);
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -38,12 +79,12 @@ public class ClientHandler{
         }
     }
 
-    public String getClientName() {
-        return clientName;
+    public String getNickname() {
+        return nickname;
     }
 
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public void sendMessage(String message) {
