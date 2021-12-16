@@ -2,6 +2,7 @@ package server;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 
 public class ClientHandler{
 
@@ -10,6 +11,7 @@ public class ClientHandler{
     DataInputStream in;
     Socket socket;
     String nickname;
+    List<String> blackList;
 
     public ClientHandler(Server server, Socket clientSocket) {
         try {
@@ -59,19 +61,46 @@ public class ClientHandler{
                     if (!isExit) {
                         while (true) {
                             String message = in.readUTF();
-
-                            if ("/end".equalsIgnoreCase(message)){
-                                // для оповещения клиента, т.к. без сервера клиент работать не должен
-                                out.writeUTF("/serverClosed");
-                                System.out.println("Client (" + socket.getInetAddress() + ") exited");
-                                break;
-                            } else {
-                                server.broadcastMessage(nickname, message);
+                            // for all service commands
+                            if (message.startsWith("/") || message.startsWith("@")) {
+                                if ("/end".equalsIgnoreCase(message)){
+                                    out.writeUTF("/serverClosed");
+                                    System.out.println("Client (" + socket.getInetAddress() + ") exited");
+                                    break;
+                                }
+                                if (message.startsWith("@")) {
+                                    String[] tokens = message.split(" ", 2);
+                                    server.sendPrivateMsg(this, tokens[0].substring(1), tokens[1]);
+                                }
+                                if (message.startsWith("/blacklist ")) {
+                                    String[] tokens = message.split(" ");
+                                    blackList.add(tokens[1]);
+                                    sendMessage("You added " + tokens[1] + " to blacklist");
+                                } else {
+                                    server.broadcastMessage(nickname, message);
+                                }
                             }
                         }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
+                }  finally {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    server.unsubscribe(this);
                 }
             }).start();
         } catch (IOException e) {

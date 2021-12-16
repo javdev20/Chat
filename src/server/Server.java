@@ -59,4 +59,15 @@ public class Server {
                 + "disconnected");
     }
 
+    public void sendPrivateMsg(ClientHandler nickFrom, String nickTo, String msg) {
+        for (ClientHandler c : users) {
+            if (c.getNickname().equals(nickTo)) {
+                if (!nickFrom.getNickname().equals(nickTo)) {
+                    c.sendMessage(nickFrom.getNickname() + ": [Send for " + nickTo + "] " + msg);
+                    nickFrom.sendMessage(nickFrom.getNickname() + ": [Send for " + nickTo + "] " + msg);
+                }
+            }
+        }
+    }
+
 }
